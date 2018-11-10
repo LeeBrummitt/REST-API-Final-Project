@@ -1,6 +1,7 @@
 var MongoClient = require('mongodb').MongoClient;
 var url = "mongodb://omega.unasec.info/";
 const express = require('express');
+var mongojs = require('mongojs');
 const app = express();
 
 
@@ -14,11 +15,16 @@ app.get('/server/review/:reviewid', function(req, response) {
     MongoClient.connect(url, function(err, db) {
         if (err) throw err;
         var dbo = db.db("amazon");
-        dbo.collection("reviews").findOne({}, function(err, result) {
-            if (err) throw err;
-            console.log(result);
-            db.close();
-        });
+        try{
+            dbo.collection("reviews").findOne({"_id" : mongojs.ObjectID(req.params.reviewid)}, function(err, result) {
+                if (err) throw err;
+                response.send(result);
+                db.close();
+            });
+        }
+        catch(err){
+            response.send("ERROR: An error has occured");
+        }
     });
     
 });
