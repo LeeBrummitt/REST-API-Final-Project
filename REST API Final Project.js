@@ -9,21 +9,25 @@ app.get('/', function(request, response) {  response.sendfile(__dirname + "/inde
 
 app.listen(8080);
 
-//seperate test files needed
+
 app.get('/server/review/:reviewid', function(req, response) {
     
     MongoClient.connect(url, function(err, db) {
         if (err) throw err;
-        var dbo = db.db("amazon");
         try{
-            dbo.collection("reviews").findOne({"_id" : mongojs.ObjectID(req.params.reviewid)}, function(err, result) {
-                if (err) throw err;
-                response.send(result);
-                db.close();
+            db.db("amazon").collection("reviews").aggregate([
+                {
+                    $match: {
+                        _id: {$eq: mongojs.ObjectID(req.params.reviewid)}
+                        
+                    }
+                }
+            ]).toArray(function(err, results) {
+                response.send(results[0]);
             });
         }
         catch(err){
-            response.send("ERROR: An error has occured");
+            response.send("ERROR: " + err);
         }
     });
     
