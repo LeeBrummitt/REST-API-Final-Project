@@ -1,0 +1,19 @@
+Did some before this, started keeping track partway through because I got tired of making up new URLs
+
+
+Get a review - GET https://server/review/:reviewid
+    https://qwerttyuiop-leebrummitt.c9users.io/server/review/5bd0dcffe25a5350c21ff6de
+Get random reviews by stars - GET https://server/review/:n/:stars
+    https://qwerttyuiop-leebrummitt.c9users.io/server/review/11/4
+Get random reviews by date - GET https://server/review/:n/:from_date/:to_date
+    https://qwerttyuiop-leebrummitt.c9users.io/server/review/4/2007-08-28T00:00:00.000Z/2014-08-28T00:00:00.000Z
+Add a review - POST https://server/review/:reviewid
+Update a review - PUT https://server/review/:reviewid
+Delete a review - DELETE https://server/review/:reviewid
+    https://qwerttyuiop-leebrummitt.c9users.io/server/review/5bd0dcffe25a5350c21ff6de
+
+
+Get an average of review stars over time - GET https://server/review/:from/:to
+    https://qwerttyuiop-leebrummitt.c9users.io/server/review/2007-08-28T00:00:00.000Z/2014-08-28T00:00:00.000Z
+Get an average of helpful votes by product - GET https://server/review/helpful/:prodid
+Get average review info for a customer by category - GET https://server/review/info/:custid

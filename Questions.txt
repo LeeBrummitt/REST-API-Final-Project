@@ -1,0 +1,12 @@
+Ask how to get "random" reviews
+
+Ask about unwind
+
+How do we use post to add review to database?
+    same for put, etc
+    
+    
+how to differentiate between
+    GET https://server/review/:n/:stars
+    GET https://server/review/:from/:to
+    do I just use an if/else statement to see if the first input is an int
