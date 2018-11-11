@@ -9,7 +9,7 @@ app.get('/', function(request, response) {  response.sendfile(__dirname + "/inde
 
 app.listen(8080);
 
-
+//Get a review      ***COMPLETE***
 app.get('/server/review/:reviewid', function(req, response) {
     
     MongoClient.connect(url, function(err, db) {
@@ -23,7 +23,8 @@ app.get('/server/review/:reviewid', function(req, response) {
                     }
                 }
             ]).toArray(function(err, results) {
-                response.send(results[0]);
+                if (err) response.send(err);
+                else response.send(results[0]);
             });
         }
         catch(err){
@@ -33,22 +34,67 @@ app.get('/server/review/:reviewid', function(req, response) {
     
 });
 
+//Get random reviews by stars
 app.get('/server/review/:n/:stars', function(req, response) {
-    response.sendfile(__dirname + "/test2.json");
+    
+    MongoClient.connect(url, function(err, db) {
+        if (err) throw err;
+        try{
+            db.db("amazon").collection("reviews").aggregate([
+                { 
+                    $limit : parseInt(req.params.n) * 1000     //so we dont have to go through the whole thing
+                },
+                {
+                    $unwind: {
+                        path:'$review'
+                    }
+                },
+                { 
+                    $limit : parseInt(req.params.n)             //so we dont have to go through the whole thing
+                }
+            ]).toArray(function(err, results) {
+                if (err) response.send(err);
+                else response.send(results);
+            });
+        }
+        catch(err){
+            response.send("ERROR: " + err);
+        }
+    });
+    
 });
 
+//Get random reviews by date
 app.get('/server/review/:n/:from_date/:to_date', function(req, response) {
-    response.sendfile(__dirname + "/test3.json");
+    
 });
 
+//Add a review
 app.post('/server/review/:reviewid', function(req, response) {
-    response.sendfile(__dirname + "/test4.json");
+    
 });
 
+//Update a review
 app.put('/server/review/:reviewid', function(req, response) {
-    response.sendfile(__dirname + "/test5.json");
+    
 });
 
+//Delete a review
 app.delete('/server/review/:reviewid', function(req, response) {
-    response.sendfile(__dirname + "/test6.json");
+    
+});
+
+//Get an average of review stars over time
+app.get('/server/review/:from/:to', function(req, response) {
+    
+});
+
+//Get an average of helpful votes by product
+app.get('/server/review/helpful/:prodid', function(req, response) {
+    
+});
+
+//Get average review info for a customer by category 
+app.get('/server/review/info/:custid', function(req, response) {
+    
 });
