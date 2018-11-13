@@ -84,13 +84,15 @@ MongoClient.connect(url, function(err, db) {
         }
     });
     
-    //Add a review      ~~~NOT WORKING~~~
-    app.post('/server/review/:reviewid', function(req, response) {
+    //Add a review          
+    app.post('/server/review/:reviewid', function(req, response, body) {
         try{
+            var data = JSON.parse(body);
+            
+            var myobj = data;
+            
             db.db("amazon").collection("reviews").insert(
-                {
-                    _id: mongojs.ObjectID(req.params.reviewid)
-                }
+                myobj
             ) 
             response.send("Item appears to have been added");
         }
@@ -99,15 +101,19 @@ MongoClient.connect(url, function(err, db) {
         }
     });
     
-    //Update a review        ~~~NOT WORKING~~~
-    app.put('/server/review/:reviewid/', function(req, response) {
+    //Update a review       
+    app.put('/server/review/:reviewid/', function(req, response, body) {
         try{
+            var data = JSON.parse(body);
+            
+            var myobj = data;
+            
             db.db("amazon").collection("reviews").update(
                 {
                     _id: mongojs.ObjectID(req.params.reviewid)
                 },
                 {
-                    _id: mongojs.ObjectID(req.params.reviewid)
+                    myobj
                 },
                 {
                     
