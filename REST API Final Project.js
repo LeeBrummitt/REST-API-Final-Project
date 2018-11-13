@@ -150,7 +150,7 @@ MongoClient.connect(url, function(err, db) {
                 { 
                     $group: 
                     { 
-                        _id: { $sum: 1 },
+                        _id: null,
                         TotalValue: { $sum: "$review.star_rating" },
                         count: { $sum: 1 }
                     }
@@ -191,7 +191,7 @@ MongoClient.connect(url, function(err, db) {
                 { 
                     $group: 
                     { 
-                        _id: { $sum: 1 },
+                        _id: null,
                         TotalValue: { $sum: "$votes.helpful_votes" },
                         count: { $sum: 1 }
                     }
@@ -215,9 +215,48 @@ MongoClient.connect(url, function(err, db) {
         }
     });
     
-    //Get average review info for a customer by category 
+    //Get average review info for a customer by category        ***COMPLETE***
     app.get('/server/additional/review/info/:custid', function(req, response) {
-        
+        try{
+            db.db("amazon").collection("reviews").aggregate([
+                /*
+                { 
+                    $limit: 1000000     //so we dont have to go through the whole thing
+                },                      //seems to run fast enough without, so I commented it out. Leaving it incase I need it later
+                */
+                {
+                    $match: {
+                        "customer_id": {$eq: req.params.custid },
+                    }
+                },
+                { 
+                    $group: 
+                    { 
+                        _id: "$product.category",
+                        TotalStarValue: { $sum: "$review.star_rating" },
+                        TotalHelpfulValue: { $sum: "$votes.helpful_votes" },
+                        count: { $sum: 1 }
+                    }
+                },
+                {
+                    $project: 
+                    { 
+                        _id: 1,
+                        StarAverage: {$divide: [ "$TotalStarValue", "$count" ] },
+                        HelpfulAverage: {$divide: [ "$TotalHelpfulValue", "$count" ] },
+                        TotalStarValue: 1,
+                        TotalHelpfulValue: 1,
+                        count: 1
+                    } 
+                }
+            ]).toArray(function(err, results) {
+                if (err) response.send(err);
+                else response.send(results);
+            });
+        }
+        catch(err){
+            response.send("ERROR: " + err);
+        }
     });
 
 });

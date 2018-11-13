@@ -19,3 +19,4 @@ Get an average of review stars over time - GET https://server/additional/review/
 Get an average of helpful votes by product - GET https://server/additional/review/additional/helpful/:prodid
     https://qwerttyuiop-leebrummitt.c9users.io/server/additional/review/helpful/B00FDN63N2
 Get average review info for a customer by category - GET https://server/additional/review/info/:custid
+    https://qwerttyuiop-leebrummitt.c9users.io/server/additional/review/info/19558908
