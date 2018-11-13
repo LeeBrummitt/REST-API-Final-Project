@@ -33,15 +33,12 @@ MongoClient.connect(url, function(err, db) {
         }
     });
     
-    //Get random reviews by stars       ***COMPLETE***      ---CHECK---
+    //Get random reviews by stars       ***COMPLETE***
     app.get('/server/review/:n/:stars', function(req, response) {
         try{
             db.db("amazon").collection("reviews").aggregate([
                 { 
-                    $limit : parseInt(req.params.n) * 1000     //so we dont have to go through the whole thing
-                },
-                {
-                    $unwind: '$review'
+                    $limit : parseInt(req.params.n) * 10000     //so we dont have to go through the whole thing
                 },
                 {
                     $match: {
@@ -49,7 +46,7 @@ MongoClient.connect(url, function(err, db) {
                     }
                 },
                 { 
-                    $limit : parseInt(req.params.n)             //so we dont have to go through the whole thing
+                    $sample:{ size: parseInt(req.params.n) }     //was getting fewer results then expected occasionally- increasing initial size seemed  to fix
                 }
             ]).toArray(function(err, results) {
                 if (err) response.send(err);
@@ -65,6 +62,9 @@ MongoClient.connect(url, function(err, db) {
     app.get('/server/review/:n/:from_date/:to_date', function(req, response) {
         try{
             db.db("amazon").collection("reviews").aggregate([
+                { 
+                    $limit : (parseInt(req.params.n) * 10000)     //so we dont have to go through the whole thing
+                },
                 {
                     $match: {
                         "review.date": {$gt: new Date(Date.parse(req.params.from_date)) },
@@ -72,7 +72,7 @@ MongoClient.connect(url, function(err, db) {
                     }
                 },
                 { 
-                    $limit : parseInt(req.params.n)             //so we dont have to go through the whole thing
+                    $sample: { size: (parseInt(req.params.n) ) }    //was getting fewer results then expected occasionally- increasing initial size seemed  to fix
                 }
             ]).toArray(function(err, results) {
                 if (err) response.send(err);
@@ -84,14 +84,40 @@ MongoClient.connect(url, function(err, db) {
         }
     });
     
-    //Add a review
+    //Add a review      ~~~NOT WORKING~~~
     app.post('/server/review/:reviewid', function(req, response) {
-        
+        try{
+            db.db("amazon").collection("reviews").insert(
+                {
+                    _id: mongojs.ObjectID(req.params.reviewid)
+                }
+            ) 
+            response.send("Item appears to have been added");
+        }
+        catch(err){
+            response.send("ERROR: " + err);
+        }
     });
     
-    //Update a review
-    app.put('/server/review/:reviewid', function(req, response) {
-        
+    //Update a review        ~~~NOT WORKING~~~
+    app.put('/server/review/:reviewid/', function(req, response) {
+        try{
+            db.db("amazon").collection("reviews").update(
+                {
+                    _id: mongojs.ObjectID(req.params.reviewid)
+                },
+                {
+                    _id: mongojs.ObjectID(req.params.reviewid)
+                },
+                {
+                    
+                }
+            ) 
+            response.send("Item appears to have been updated");
+        }
+        catch(err){
+            response.send("ERROR: " + err);
+        }
     });
     
     //Delete a review       ***COMPLETE***
@@ -108,20 +134,36 @@ MongoClient.connect(url, function(err, db) {
     
     //"Additional Aggregations (NOTE: some of these may take way to long and timeout the http request)"
     
-    //Get an average of review stars over time      ~~~NOT WORKING~~~
-    app.get('/server/review/average/:from/:to', function(req, response) {
+    //Get an average of review stars over time          ***COMPLETE***
+    app.get('/server/additional/review/average/:from/:to', function(req, response) {
         try{
             db.db("amazon").collection("reviews").aggregate([
                 { 
-                    $limit : 1000     //so we dont have to go through the whole thing
+                    $limit: 10000     //so we dont have to go through the whole thing
                 },
-                { $project: { 
-                    value: "$review.star_rating",
-                    TotalValue: { $sum: "$review.star_rating" },
-                    count: { $sum: 1 },
-                    Average: {$divide: [ "$TotalValue", "$count" ] },
-                    "review.star_rating": 1 
-                } }
+                {
+                    $match: {
+                        "review.date": {$gt: new Date(Date.parse(req.params.from)) },
+                        "review.date": {$lt: new Date(Date.parse(req.params.to)) }
+                    }
+                },
+                { 
+                    $group: 
+                    { 
+                        _id: { $sum: 1 },
+                        TotalValue: { $sum: "$review.star_rating" },
+                        count: { $sum: 1 }
+                    }
+                },
+                {
+                    $project: 
+                    { 
+                        _id: 0,
+                        Average: {$divide: [ "$TotalValue", "$count" ] },
+                        TotalValue: 1,
+                        count: 1
+                    } 
+                }
             ]).toArray(function(err, results) {
                 if (err) response.send(err);
                 else response.send(results);
@@ -132,13 +174,49 @@ MongoClient.connect(url, function(err, db) {
         }
     });
     
-    //Get an average of helpful votes by product
-    app.get('/server/review/helpful/:prodid', function(req, response) {
-        
+    //Get an average of helpful votes by product        ***COMPLETE***
+    app.get('/server/additional/review/helpful/:prodid', function(req, response) {
+        try{
+            db.db("amazon").collection("reviews").aggregate([
+                /*
+                { 
+                    $limit: 1000000     //so we dont have to go through the whole thing
+                },                      //seems to run fast enough without, so I commented it out. Leaving it incase I need it later
+                */
+                {
+                    $match: {
+                        "product.id": {$eq: req.params.prodid },
+                    }
+                },
+                { 
+                    $group: 
+                    { 
+                        _id: { $sum: 1 },
+                        TotalValue: { $sum: "$votes.helpful_votes" },
+                        count: { $sum: 1 }
+                    }
+                },
+                {
+                    $project: 
+                    { 
+                        _id: 0,
+                        Average: {$divide: [ "$TotalValue", "$count" ] },
+                        TotalValue: 1,
+                        count: 1
+                    } 
+                }
+            ]).toArray(function(err, results) {
+                if (err) response.send(err);
+                else response.send(results);
+            });
+        }
+        catch(err){
+            response.send("ERROR: " + err);
+        }
     });
     
     //Get average review info for a customer by category 
-    app.get('/server/review/info/:custid', function(req, response) {
+    app.get('/server/additional/review/info/:custid', function(req, response) {
         
     });
 
